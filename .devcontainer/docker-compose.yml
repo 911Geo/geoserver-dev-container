@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../..:/workspaces:cached
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+
+  db:
+    image: mongo:latest
+    restart: unless-stopped
+    volumes:
+      - mongodb-data:/data/db
+
+    # Uncomment to change startup options
+    # environment:
+    #  MONGO_INITDB_ROOT_USERNAME: root
+    #  MONGO_INITDB_ROOT_PASSWORD: example
+    #  MONGO_INITDB_DATABASE: your-database-here
+
+    # Add "forwardPorts": ["27017"] to **devcontainer.json** to forward MongoDB locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+    # Runs database container on the same network as the app, allows "forwardPorts" in devcontainer.json function.
+    network_mode: service:app
+
+    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally. 
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+  geoserver:
+    image: docker.osgeo.org/geoserver:2.21.1
+    restart: unless-stopped
+
+    volumes:
+      - geoserver-data:/opt/geoserver_data/:Z
+      - geoserver-data:/opt/additional_libs/:Z
+
+    # Runs container on the same network as the app container, allows "forwardPorts" in devcontainer.json function.
+    network_mode: service:app
+
+  geoserver-nginx:
+    image: nginx:latest
+    restart: unless-stopped
+
+    # Runs nginx container on the same network as the app, allows "forwardPorts" in devcontainer.json function.
+    network_mode: service:app
+
+    volumes:
+      - ./geoserver-nginx/etc/nginx/conf.d:/etc/nginx/conf.d:ro
+
+volumes:
+  mongodb-data:
+  geoserver-data:
